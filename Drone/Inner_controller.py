@@ -22,7 +22,7 @@ class Controller_attituede_rate(Mathfunction):
     # Body angle velocity PID
     self.Wx_pid = PID(30., 0.0, 0.0, dt, 1.5)
     self.Wy_pid = PID(30., 0.0, 0.0, dt, 1.5)
-    self.Wz_pid = PID(1, 0, 0.0, dt)
+    self.Wz_pid = PID(0.5, 0, 0.0, dt)
     
     self.M_gf = np.array([0.0, 0.0, 0.0])
     self.FM_pwm = np.array([0.0, 0.0, 0.0, 0.0])
@@ -40,13 +40,11 @@ class Controller_attituede_rate(Mathfunction):
     KP = np.sqrt(2)*I[0, 0]/0.17/4.0
     KP = I[1, 1]/4.0
     KY = I[2, 2]/4
-    # KY = 1/4.0
     self.FM2MP_map  = np.array([[KT, KT, KT, KT], [-KR, -KR, KR, KR], [-KP, KP, KP, -KP], [-KY, KY, -KY, KY]]).T
     self.MP2FM_map = np.array([[1.0, 1.0, 1.0, 1.0], [-1.0, -1.0, 1.0, 1.0], [-1.0, 1.0, 1.0, -1.0], [-1.0, 1.0, -1.0, 1.0]])
 
   def set_state(self, Wb, Euler_rate):
       
-    # print("set references")
     self.Wb = Wb
     self.Euler_rate = Euler_rate
 
@@ -68,8 +66,7 @@ class Controller_attituede_rate(Mathfunction):
     self.FM2MP(F)
     self.MM_gf2pwm()
     self.MM_gf2pwm2(F)
-    # print("C",self.MP_gf)
-    # print(self.M_gf)
+
 
   def inner_controller2(self, acc, Wb):
     
@@ -82,9 +79,6 @@ class Controller_attituede_rate(Mathfunction):
     self.controll_attitude_rate2()
     self.FM2MP(acc)
     self.MM_gf2pwm()
-    # self.MM_gf2pwm2(F)
-    # print("C",self.MP_gf)
-    # print(self.M_gf)
 
   def controll_attitude_rate(self):
 
@@ -116,7 +110,6 @@ class Controller_attituede_rate(Mathfunction):
     self.MP_gf_Y = np.matmul(self.FM2MP_map, np.array([0.0, 0.0, 0.0, self.M_gf[2]])) # Yaw
 
   def MM_gf2pwm(self):
-    # print("Moter map: gF -> PWM ")
 
     In_m1 = self.MP_gf_TRP[0]
     In_m2 = self.MP_gf_TRP[1]

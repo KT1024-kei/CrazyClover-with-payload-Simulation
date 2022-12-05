@@ -2,7 +2,7 @@ import numpy as np
 
 class State():
   def __init__(self, dt, initial):
-    print("Initialize State")
+
     self.dt = float(dt)
     self.pre = initial
     self.now = initial

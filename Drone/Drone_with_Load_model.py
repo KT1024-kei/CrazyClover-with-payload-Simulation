@@ -15,7 +15,6 @@ class Drone_with_cable_suspended(Mathfunction):
     self.inner_controller = Controller_attituede_rate(dt, self.mQ+self.mL, self.I)
     
   def set_parametor(self, dt):
-    # print("Set Simulation and Physical parametor")
 
     # Physical Parametor
     self.g = 9.81
@@ -28,7 +27,7 @@ class Drone_with_cable_suspended(Mathfunction):
     self.Hegiht = 0.05
     
     self.mL = 0.05
-    self.l = 0.7
+    self.l = 0.5
 
     self.CM_MP2FM  = np.array([[1.0, 1.0, 1.0, 1.0], [-1.0, -1.0, 1.0, 1.0], [-1.0, 1.0, 1.0, -1.0], [1.0, -1.0, 1.0, -1.0]])
     self.M = np.zeros(4)
@@ -42,7 +41,6 @@ class Drone_with_cable_suspended(Mathfunction):
                        (0, 0, 0.0, 1)])
  
   def set_initial_state(self, P, V, R, Euler, Wb, Euler_rate, L, dL, q, dq,  dt):
-    # print("set references")
     # quadrotor state
     self.P = State(dt, P)
     self.V = State(dt, V)
@@ -59,7 +57,6 @@ class Drone_with_cable_suspended(Mathfunction):
 
   
   def update_state(self, acc, Omega_acc, Lacc, ddq):
-    # print("update phsycal state")
     # quadrotor states
     self.V.integration(acc)
     self.Wb.integration(Omega_acc)
@@ -80,11 +77,8 @@ class Drone_with_cable_suspended(Mathfunction):
     self.q.integration(self.dq.pre)
 
     self.inner_controller.set_state(self.Wb.now, self.Euler_rate.now)
-    # print(self.R.now)
-
     
   def MP2FM(self, Moter_Power):
-    # print("Input Thrust[gF] and Euler rate[rad/s]")
 
     return np.matmul(self.CM_MP2FM, Moter_Power)
 
@@ -94,7 +88,6 @@ class Drone_with_cable_suspended(Mathfunction):
     return self.inner_controller.MP_pwm
 
   def Power_destribution_stock(self, T, Eulerrate):
-    # print("Destribute Power to each Moter")
 
     Moter_Power = np.zeros(4)
     r = Eulerrate[0]/2.0
@@ -105,11 +98,10 @@ class Drone_with_cable_suspended(Mathfunction):
     Moter_Power[1] = self.saturation(T - r - p - y, 35000.0, 0.0)
     Moter_Power[2] = self.saturation(T + r - p + y, 35000.0, 0.0)
     Moter_Power[3] = self.saturation(T + r + p - y, 35000.0, 0.0)
-    # print(Moter_Power)
+
     return Moter_Power
 
   def Power_destribution_stock2(self, IN_Moter_Power):
-      # print("Destribute Power to each Moter")
 
       Moter_Power = np.zeros(4)
 
@@ -117,24 +109,22 @@ class Drone_with_cable_suspended(Mathfunction):
       Moter_Power[1] = self.saturation(IN_Moter_Power[1], 40000.0, 0.0)
       Moter_Power[2] = self.saturation(IN_Moter_Power[2], 40000.0, 0.0)
       Moter_Power[3] = self.saturation(IN_Moter_Power[3], 40000.0, 0.0)
-      # print(Moter_Power)
+
       return Moter_Power
 
   def Drone_with_Load_Dynamics(self, F, M):
-    # print("Calcurate Drone motion")
+
     acc = (np.dot(self.q.now, F*self.R.now@self.e3)*self.q.now*(1 - (self.mQ+self.mL)/self.mQ) +  \
           self.mL*self.l*np.dot(self.dq.now, self.dq.now)*self.q.now + ((self.mQ+self.mL)/self.mQ)*np.dot(self.q.now, self.q.now)*F*self.R.now@self.e3)/(self.mQ + self.mL) - self.g*self.e3
     Omega_acc = np.matmul(np.linalg.inv(self.I), (M - np.cross(self.Wb.now, np.matmul(self.I, self.Wb.now))))
 
     Lacc = (np.dot(self.q.now,F*self.R.now@self.e3) - self.mQ*self.l*(np.dot(self.dq.now,self.dq.now)))*self.q.now/(self.mQ + self.mL) - self.g*self.e3
     qdd = np.cross(self.q.now, np.cross(self.q.now, F*self.R.now@self.e3))/(self.mQ*self.l) - np.dot(self.dq.now, self.dq.now)*self.q.now
-    # acc = (Lacc - self.l*qdd)
-    # Lacc = acc + self.l*qdd
 
     return acc, Omega_acc, Lacc, qdd
 
   def MM_pwm2gf(self, moter):
-    # print("Moter map: PWM -> gF ")
+
     In_m1 = moter[0]
     In_m2 = moter[1]
     In_m3 = moter[2]
@@ -170,18 +160,13 @@ class Drone_with_cable_suspended(Mathfunction):
 
     self.M = self.get_input_acc_and_Wb(acc, Wb)
 
-    # M_pwm = self.Power_destribution_stock(Thrust, Euelr_rate)
     M_pwm = self.Power_destribution_stock2(self.M)
-    # print('C', M_pwm)
     M_gf = self.MM_pwm2gf(M_pwm)
-    # print(M_gf)
     self.F_and_M = self.MP2FM(M_gf)
-    # print(self.F_and_M[1:])
     tmp = np.array([self.I[0, 0]*self.inner_controller.M_gf[0], self.I[1, 1]*self.inner_controller.M_gf[1], self.I[2, 2]*self.inner_controller.M_gf[2]])
     tmp = np.array([self.F_and_M[1], self.F_and_M[2],self.F_and_M[2]])
-    # print(self.F_and_M[1:] - self.inner_controller.M_gf)
+
     acc, Wb_acc, Lacc, ddq  = self.Drone_with_Load_Dynamics(acc*(self.mQ+self.mL), tmp)
-    # acc, Wb_acc, Lacc, qdd  = self.Drone_with_Load_Dynamics(acc, self.inner_controller.M_gf)  # CrazyCloverの特性を無視する場合
     self.update_state(acc,  Wb_acc, Lacc, ddq)
 
     return acc, Wb_acc

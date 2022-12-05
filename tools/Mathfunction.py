@@ -1,14 +1,14 @@
 import numpy as np
 
 class Mathfunction():
-  # --------------- function related to derivative polynominal --------------
+  # ! function related to derivative polynominal 
   def time_polyder(self, t, k, order):
       terms = np.zeros(order)
       coeffs = np.polyder([1]*order,k)[::-1]
       pows = t**np.arange(0,order-k,1)
       terms[k:] = coeffs*pows
       return terms
-  # --------------- Pysical math function ------------------
+  # ! =================== Pysical math function =====================
   def Vee(self, Vector):
     return np.array([[0, -Vector[2], Vector[1]], [Vector[2], 0, -Vector[0]], [-Vector[1], Vector[0], 0]])
 
@@ -52,7 +52,7 @@ class Mathfunction():
     return Wb
   
   def Euler2Rot(self, Euler):
-    print(Euler)
+
     r = Euler[0]; p = Euler[1]; y = Euler[2]
     cosR = np.cos(r); sinR = np.sin(r)
     cosP = np.cos(p); sinP = np.sin(p)
@@ -72,9 +72,12 @@ class Mathfunction():
     
     return np.array(R3*R2*R1)
 
-class RowPath_Filter():
+# * ===================================================
+
+# ! LowPath Filter
+class LowPath_Filter():
   
-  def Init_LowPass2D(self, fc): # cut off frecency, sampling rate
+  def Init_LowPass2D(self, fc):
     
     self.fc = fc
     self.r0 = np.zeros(3)
