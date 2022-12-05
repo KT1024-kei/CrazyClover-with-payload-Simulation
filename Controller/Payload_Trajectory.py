@@ -24,13 +24,21 @@ class Payload_Trajectory():
 
   def set_clock(self, t):
     self.t = t
+  
+  # ! set payload trajectory
+  def set_traj_plan(self, trajectory_plan):
+    self.trajectory_plan = trajectory_plan
+    self.set_poly_traj(trajectory_plan)
 
-  @run_once
+  # ! polynominal trajectory plannning
   def poly_traj_init(self, trajectory_plan):
-    # polynominal trajectory planning
+
     if trajectory_plan == "straight":
       self.traj = pd.read_csv('/home/kato/lab_exp_desktop_crazyswarm/Simulation/CrazyClover/Controller/Trajectory segment parametors/traj_straight_4s.csv')
+    else:
+      return 0
     
+    # * set trajectory palametor
     self.len_seg = self.traj["N_segment"][0]
     self.segs_T = self.traj["Tseg"][0:self.len_seg]
     self.Xcoeffs = self.traj["Xcoeff"]
@@ -41,22 +49,53 @@ class Payload_Trajectory():
     self.seg_now = 0
     self.T = 0
     self.Toffset = self.t
-    # print(self.Order)
 
-  def set_traj_plan(self, trajectory_plan):
-    self.trajectory_plan = trajectory_plan
-    print(trajectory_plan)
+  # ! periodic trajectory 
+  def poly_traj_periodic(self):
+
+    if sum(self.segs_T) + self.Toffset < t:
+      self.Toffset += sum(self.segs_T)
+      self.seg_now = 0
+      self.T = 0
+    if sum(self.segs_T[:self.seg_now+1])+self.Toffset < t:
+      self.T += self.segs_T[self.seg_now]
+      self.seg_now += 1
+    t -= (self.T + self.Toffset)
+
     
-  def poly_traj(self):
+    Xcoeff = self.Xcoeffs[self.seg_now*self.Order:(self.seg_now+1)*self.Order]
+    Ycoeff = self.Ycoeffs[self.seg_now*self.Order:(self.seg_now+1)*self.Order]
+    Zcoeff = self.Zcoeffs[self.seg_now*self.Order:(self.seg_now+1)*self.Order]
+    
+    poly_T0 = MF().time_polyder(t, 0, self.Order)
+    poly_T1 = MF().time_polyder(t, 1, self.Order)
+    poly_T2 = MF().time_polyder(t, 2, self.Order)
+    poly_T3 = MF().time_polyder(t, 3, self.Order)
+    poly_T4 = MF().time_polyder(t, 4, self.Order)
+    poly_T5 = MF().time_polyder(t, 5, self.Order)
+
+    self.traj_L = np.array([np.dot(Xcoeff, poly_T0), np.dot(Ycoeff, poly_T0), np.dot(Zcoeff, poly_T0)])
+    self.traj_dL = np.array([np.dot(Xcoeff, poly_T1), np.dot(Ycoeff, poly_T1), np.dot(Zcoeff, poly_T1)])
+    self.traj_ddL = np.array([np.dot(Xcoeff, poly_T2), np.dot(Ycoeff, poly_T2), np.dot(Zcoeff, poly_T2)])
+    self.traj_dddL = np.array([np.dot(Xcoeff, poly_T3), np.dot(Ycoeff, poly_T3), np.dot(Zcoeff, poly_T3)])
+    self.traj_ddddL = np.array([np.dot(Xcoeff, poly_T4), np.dot(Ycoeff, poly_T4), np.dot(Zcoeff, poly_T4)])
+    self.traj_dddddL = np.array([np.dot(Xcoeff, poly_T5), np.dot(Ycoeff, poly_T5), np.dot(Zcoeff, poly_T5)])
+    self.traj_ddddddL = np.array([np.dot(Xcoeff, poly_T3), np.dot(Ycoeff, poly_T3), np.dot(Zcoeff, poly_T3)])
+
+    self.traj_Qyaw = 0.0
+    self.traj_Qyaw_rate = 0.0
+
+  # ! non periodic trajectory
+  def poly_traj_non_periodic(self):
     t = self.t
-    # print(sum(self.segs_T) + self.Toffset, t)
+
     if sum(self.segs_T) + self.Toffset < t:
       return 0
     if sum(self.segs_T[:self.seg_now+1])+self.Toffset < t:
       self.T += self.segs_T[self.seg_now]
       self.seg_now += 1
     t -= (self.T + self.Toffset)
-    # print(t)
+
     
     Xcoeff = self.Xcoeffs[self.seg_now*self.Order:(self.seg_now+1)*self.Order]
     Ycoeff = self.Ycoeffs[self.seg_now*self.Order:(self.seg_now+1)*self.Order]
@@ -90,26 +129,9 @@ class Payload_Trajectory():
     self.traj_dddL[0] =  A*w**3*np.sin(w*self.t); self.traj_dddL[1] = -A*w**3*np.cos(w*self.t); self.traj_dddL[2] = 0.0
     self.traj_ddddL[0] =  A*w**4*np.cos(w*self.t); self.traj_ddddL[1] = A*w**4*np.sin(w*self.t); self.traj_ddddL[2] = 0.0
     self.traj_dddddL[0] =  -A*w**5*np.sin(w*self.t); self.traj_dddddL[1] = A*w**5*np.cos(w*self.t); self.traj_dddddL[2] = 0.0
-    # print(self.traj_acc)
 
     self.traj_Qyaw = 0.0
     self.traj_Qyaw_rate = 0.0
-
-  def traj_hover(self):
-    T = 10.0
-    A = 1.0
-    w = 2*np.pi/T
-    self.traj_L[0:2] = 0.0; self.traj_L[2] =  0.5#1+A*np.sin(w*self.t)     
-    self.traj_dL[0:2] = 0.0; self.traj_dL[2] =  0.0#A*w*np.cos(w*self.t)*0
-    self.traj_ddL[0:2] = 0.0; self.traj_ddL[2] = -A*w**2*np.sin(w*self.t)*0
-    self.traj_dddL[0:2] =  0.0; self.traj_dddL[2] = -A*w**3*np.cos(w*self.t) *0
-    self.traj_ddddL[0:2] =  0.0; self.traj_ddddL[2] = A*w**4*np.sin(w*self.t)*0
-    self.traj_dddddL[0:2] =  0.0; self.traj_dddddL[2] = A*w**5*np.cos(w*self.t)*0
-    # print(self.traj_acc)
-
-    self.traj_Qyaw = 0.0
-    self.traj_Qyaw_rate = 0.0
-
 
   def Cable_vector_traj(self):
     
@@ -140,25 +162,25 @@ class Payload_Trajectory():
     self.traj_ddL[0] = 0.0; self.traj_ddL[1] = 0.0;  self.traj_ddL[2] = 0.0
     self.traj_dddL[0] = 0.0; self.traj_dddL[1] = 0.0;  self.traj_dddL[2] = 0.0
     self.traj_ddddL[0] = 0.0; self.traj_ddddL[1] = 0.0;  self.traj_ddddL[2] = 0.0
-    # print(self.traj_acc)
 
     self.traj_yaw = 0.0
     self.traj_yaw_rate = 0.0
-  
+
+  # ! select trajectory
   def set_traj(self):
     
     if self.trajectory_plan == "circle":
       self.traj_circle()
       self.Cable_vector_traj()
-    elif self.trajectory_plan == "hover":
-      self.traj_hover()
-      self.Cable_vector_traj()
-    
+
     elif self.trajectory_plan == "stop":
       self.stop_track()
+      self.Cable_vector_traj()
 
     elif self.trajectory_plan == "straight":
-      
-      self.poly_traj_init("straight")
-      self.poly_traj()
+      self.poly_traj_non_periodic()
       self.Cable_vector_traj()
+      
+  # ! initialize polynominal trajectory 
+  def set_poly_traj(self, poly_traj):
+    self.poly_traj_init(poly_traj)
