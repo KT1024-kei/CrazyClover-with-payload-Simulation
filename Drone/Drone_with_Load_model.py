@@ -23,8 +23,8 @@ class Drone_with_cable_suspended(Mathfunction):
     
     self.mQ = 0.558
     self.I = np.array([[10**(-1) , 0.0, 0.0],[0.0, 10**(-1), 0.0], [0.0, 0.0, 10**(-1)]])
-    self.Arm_length = 0.15
-    self.Hegiht = 0.05
+    self.Arm_length = 0.17
+    self.Height = 0.05
     
     self.mL = 0.05
     self.l = 0.5
@@ -36,7 +36,7 @@ class Drone_with_cable_suspended(Mathfunction):
                        (-self.Arm_length, 0, 0, 1),
                        (0, -self.Arm_length, 0, 1),
                        (0, 0, 0, 1),
-                       (0, 0, self.Hegiht, 1),
+                       (0, 0, self.Height, 1),
                        (0, 0, 0.0, 1.0),
                        (0, 0, 0.0, 1)])
  
