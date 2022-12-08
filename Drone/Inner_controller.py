@@ -20,9 +20,9 @@ class Controller_attituede_rate(Mathfunction):
     self.Y_rate_pid = PID(15.0, 5, 0.0, dt, 1.5)
     
     # Body angle velocity PID
-    self.Wx_pid = PID(30., 0.0, 0.0, dt, 1.5)
-    self.Wy_pid = PID(30., 0.0, 0.0, dt, 1.5)
-    self.Wz_pid = PID(0.5, 0, 0.0, dt)
+    self.Wx_pid = PID(2.6, 0.0, 0.0, dt, 1.5)
+    self.Wy_pid = PID(2.6, 0.0, 0.0, dt, 1.5)
+    self.Wz_pid = PID(0.05, 0, 0.0, dt)
     
     self.M_gf = np.array([0.0, 0.0, 0.0])
     self.FM_pwm = np.array([0.0, 0.0, 0.0, 0.0])
@@ -36,9 +36,7 @@ class Controller_attituede_rate(Mathfunction):
     # Controll Matrix
     KT = self.mQ/4
     KR = np.sqrt(2)*I[1, 1]/0.17/4.0
-    KR = I[0, 0]/4.0
     KP = np.sqrt(2)*I[0, 0]/0.17/4.0
-    KP = I[1, 1]/4.0
     KY = I[2, 2]/4
     self.FM2MP_map  = np.array([[KT, KT, KT, KT], [-KR, -KR, KR, KR], [-KP, KP, KP, -KP], [-KY, KY, -KY, KY]]).T
     self.MP2FM_map = np.array([[1.0, 1.0, 1.0, 1.0], [-1.0, -1.0, 1.0, 1.0], [-1.0, 1.0, 1.0, -1.0], [-1.0, 1.0, -1.0, 1.0]])
