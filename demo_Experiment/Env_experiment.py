@@ -117,7 +117,7 @@ class Env_Experiment(Mathfunction):
             controller.set_reference(traj, self.t, tmp_P)
 
         elif controller_type == "QCSL":
-            controller.set_reference(traj, self.t)
+            controller.set_reference(traj, self.t, tmp_P)
 
     def set_clock(self, t):
         self.t = t
@@ -182,7 +182,7 @@ class Env_Experiment(Mathfunction):
     
     def quad_stop_track(self, controller, controller_type="mellinger"):
         controller.switch_controller(controller_type)
-        self.set_reference(controller=controller, traj="stop", controller_type=controller_type, init_controller=False, tmp_P=np.array([self.P[0], self.P[1], 1.0]))
+        self.set_reference(controller=controller, traj="stop", controller_type=controller_type, init_controller=False, tmp_P=np.array([self.P[0], self.P[1], self.P[2]]))
         self.land_P[0:2] = self.P[0:2]
         
     def payload_track_circle(self, controller, controller_type="QCSL", flag=False):
@@ -195,9 +195,18 @@ class Env_Experiment(Mathfunction):
 
     def payload_stop_track(self, controller, controller_type="QCSL"):
         controller.switch_controller(controller_type)
-        self.set_reference(controller=controller, traj="stop", controller_type=controller_type, init_controller=False)
+        self.set_reference(controller=controller, traj="stop", controller_type=controller_type, init_controller=False, tmp_P=np.array([self.L[0], self.L[1], self.L[2]]))
         self.land_P[0:2] = self.P[0:2]
     
     def paylaod_track_hover_payload(self, controller, controller_type="QCSL", flag=False):
         controller.switch_controller(controller_type)
         self.set_reference(controller=controller, traj="hover", controller_type=controller_type, init_controller=flag)
+
+    def payload_takeoff(self, controller, controller_type="QCSL", Pinit=np.array([0.0, 0.0, 0.0])):
+        controller.switch_controller(controller_type)
+        self.set_reference(controller=controller, traj="takeoff", controller_type=controller_type, tmp_P=Pinit)
+        self.land_P = np.array([0.0, 0.0, 0.1])
+    
+    def payload_land(self, controller, controller_type="QCSL"):
+        controller.switch_controller(controller_type)
+        self.set_reference(controller=controller, traj="land", controller_type=controller_type, init_controller=False, tmp_P=np.array([self.P[0], self.P[1], 0.0]))
