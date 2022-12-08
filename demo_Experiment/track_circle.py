@@ -39,7 +39,7 @@ def Experiment(Texp, Tsam, num_drone):
     cf = [0]*num_drone
     for i in range(num_drone):
       cf[i] = Drone_with_cable_suspended(Tsam)
-      Drone_env[i].init_state(cf[i], P=np.array([0.0, 0.0, 0.0]))
+      Drone_env[i].init_state(cf[i], P=np.array([0.0, 0.0, 0.5]))
       Drone_env[i].init_plot(None)
 
     # * simulation loop
@@ -103,7 +103,7 @@ def Experiment(Texp, Tsam, num_drone):
         Drone_env[i].save_log()
 
 if __name__ == "__main__":
-  Experiment(30, 0.005, 1)
+  Experiment(40, 0.005, 1)
 
 
 
