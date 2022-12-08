@@ -26,7 +26,7 @@ class Payload_Trajectory():
     self.t = t
   
   # ! set payload trajectory
-  def set_traj_plan(self, trajectory_plan):
+  def set_traj_plan(self, trajectory_plan, tmp_P=np.array([0.0, 0.0, 0.0])):
     self.trajectory_plan = trajectory_plan
     self.set_poly_traj(trajectory_plan)
 
@@ -35,6 +35,13 @@ class Payload_Trajectory():
 
     if trajectory_plan == "straight":
       self.traj = pd.read_csv('/home/kato/lab_exp_desktop_crazyswarm/Simulation/CrazyClover/Controller/Trajectory segment parametors/traj_straight_4s.csv')
+
+    elif trajectory_plan == "takeoff":
+      self.traj = pd.read_csv('/home/kato/lab_exp_desktop_crazyswarm/Simulation/CrazyClover/Controller/Trajectory segment parametors/traj_takeoff.csv')
+    
+    elif trajectory_plan == "land":
+      self.traj = pd.read_csv('/home/kato/lab_exp_desktop_crazyswarm/Simulation/CrazyClover/Controller/Trajectory segment parametors/traj_land.csv')
+
     else:
       return 0
     
@@ -62,7 +69,6 @@ class Payload_Trajectory():
       self.seg_now += 1
     t -= (self.T + self.Toffset)
 
-    
     Xcoeff = self.Xcoeffs[self.seg_now*self.Order:(self.seg_now+1)*self.Order]
     Ycoeff = self.Ycoeffs[self.seg_now*self.Order:(self.seg_now+1)*self.Order]
     Zcoeff = self.Zcoeffs[self.seg_now*self.Order:(self.seg_now+1)*self.Order]
@@ -120,10 +126,10 @@ class Payload_Trajectory():
     self.traj_Qyaw_rate = 0.0
 
   def traj_circle(self):
-    T = 12
+    T = 20
     A = 1.0
     w = 2*np.pi/T
-    self.traj_L[0] =  A*np.cos(w*self.t);      self.traj_L[1] =  A*np.sin(w*self.t);      self.traj_L[2] = 0.5
+    self.traj_L[0] =  A*np.cos(w*self.t);      self.traj_L[1] =  A*np.sin(w*self.t);      self.traj_L[2] = 1.0
     self.traj_dL[0] = -A*w*np.sin(w*self.t);    self.traj_dL[1] =  A*w*np.cos(w*self.t);    self.traj_dL[2] = 0.0
     self.traj_ddL[0] = -A*w**2*np.cos(w*self.t); self.traj_ddL[1] = -A*w**2*np.sin(w*self.t); self.traj_ddL[2] = 0.0
     self.traj_dddL[0] =  A*w**3*np.sin(w*self.t); self.traj_dddL[1] = -A*w**3*np.cos(w*self.t); self.traj_dddL[2] = 0.0
@@ -180,7 +186,15 @@ class Payload_Trajectory():
     elif self.trajectory_plan == "straight":
       self.poly_traj_non_periodic()
       self.Cable_vector_traj()
-      
+
+    elif self.trajectory_plan == "takeoff":
+      self.poly_traj_non_periodic()
+      self.Cable_vector_traj()
+
+    elif self.trajectory_plan == "land":
+      self.poly_traj_non_periodic()
+      self.Cable_vector_traj()
+
   # ! initialize polynominal trajectory 
   def set_poly_traj(self, poly_traj):
     self.poly_traj_init(poly_traj)

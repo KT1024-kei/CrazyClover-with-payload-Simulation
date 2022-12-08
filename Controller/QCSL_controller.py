@@ -30,13 +30,13 @@ class Quad_with_Cable_Suspended(Mathfunction):
     self.l = model.l
 
     # * set control gain
-    self.kp = np.array([0.7, 0.7, 4.0])*np.array([1, 1, 1])
-    self.kd = np.array([6, 6, 3])*0.6
+    self.kp = np.array([0.5, 0.5, 4.0])*np.array([1, 1, 1])
+    self.kd = np.array([1.0, 1.0, 3])*1.0
     self.ki = np.array([0.0, 0.0, 1.0])
     self.Lpid = PIDVEC(self.kp, self.ki, self.kd, self.dt)
-    self.kpL = np.array([3, 3, 1])*1.3
-    self.kpdL = np.array([6, 6, 5])*0.8
-    self.kR = np.array([20, 20,0.5])
+    self.kpL = np.array([3, 3, 1])*1.0
+    self.kpdL = np.array([1.5, 1.5, 5])*1.0
+    self.kR = np.array([10, 10,0.5])
 
     # * set nominal values
     self.Euler_nom = np.array([0.0, 0.0, 0.0])
@@ -50,9 +50,20 @@ class Quad_with_Cable_Suspended(Mathfunction):
 
     self.trajectory = Payload_Trajectory()
 
-  def set_reference(self, traj_plan, t):
+  def set_reference(self, traj_plan, t, tmp_P):
     self.trajectory.set_clock(t)
     self.trajectory.set_traj_plan(traj_plan)
+
+    self.tmp_pos = np.zeros(3)
+    # * set takeoff position for polynominal land trajectory 
+    if traj_plan == "takeoff":
+      self.tmp_pos = tmp_P
+    # * set landing position for polynominal land trajectory 
+    elif traj_plan == "land":
+      self.tmp_pos = tmp_P
+    # * set stop position when stop tracking trajectory
+    elif traj_plan == "stop":
+      self.tmp_pos = tmp_P
 
   def set_state(self, P, V, R, Euler, L, dL, q, dq):
 
@@ -69,7 +80,7 @@ class Quad_with_Cable_Suspended(Mathfunction):
   def Payload_Position_controller(self):
 
     # * set desired trajectory state
-    self.traj_L = self.trajectory.traj_L
+    self.traj_L = self.trajectory.traj_L + self.tmp_pos
     self.traj_dL = self.trajectory.traj_dL
     self.traj_ddL = self.trajectory.traj_ddL
     self.traj_dddL = self.trajectory.traj_dddL
@@ -154,7 +165,7 @@ class Quad_with_Cable_Suspended(Mathfunction):
     self.set_reference("stop")
 
   def log_nom(self, log, t):
-    log.write_nom(t=t, input_acc=self.input_acc, input_Wb=self.input_Wb, P=self.trajectory.traj_L, V=self.trajectory.traj_dL, Euler=self.Euler_nom, Wb=self.traj_W, Euler_rate=self.Euler_rate_nom, L=self.traj_L, q=self.traj_q, dq=self.traj_dq)
+    log.write_nom(t=t, input_acc=self.input_acc, input_Wb=self.input_Wb, P=self.trajectory.traj_L+self.tmp_pos, V=self.trajectory.traj_dL, Euler=self.Euler_nom, Wb=self.traj_W, Euler_rate=self.Euler_rate_nom, L=self.traj_L, q=self.traj_q, dq=self.traj_dq)
 
     
 
